@@ -1,0 +1,73 @@
+---
+title: "Mini Literate Analysis"
+author: "Julia Lober" 
+format: html
+---
+
+## Introduction
+
+### About the data
+
+This data set contains chemical oceanographic data from the North Pole including CDT parameters and a variety of bottle measurements. This data is publicly available at the Arctic Data Center [here](https://arcticdata.io/catalog/view/doi:10.18739/A25T3FZ8X). 
+
+### Setup
+
+These are the packages that we will need for our analysis. 
+
+```{r}
+library(readr)
+```
+
+### Read data
+
+We read in the data as a csv. 
+
+```{r}
+data <- read_csv("data/BGchem2008data.csv", show_col_types = FALSE)
+print(data)
+```
+
+### Exploring data
+
+```{r}
+colnames(data)
+summary(data)
+unique(data$Date)
+```
+
+
+## Analysis
+
+### Calculate summary statistics
+
+```{r}
+nitrate <- mean(data$NO3)
+nitrite <- mean(data$NO2)
+amm <- mean(data$NH4)
+phos <- mean(data$P)
+```
+
+The average nitrate is `r round(nitrate, digits = 3)`, nitrite is `r round(nitrite, digits = 3)`, ammonium is `r round(amm, digits = 3)`, and phosphorous is `r round(phos, digits = 3)`.
+
+### Calculate the mean Readfield ratio
+
+The Readfield ratio is an expected ratio of Carbon:Nitrogen:Phosphorous in the worlds oceans, which is generally expected to be a constant 106:16:1.  
+
+```{r}
+readfield_ratio <- (nitrate + nitrite + amm) / phos
+```
+
+### Plot ratio
+
+```{r}
+plot(data$P, (data$NO2 + data$NO3 + data$NH4),
+     xlab = "Phosphorous",
+     ylab = "Nitrogen",
+     main = "Readfield Ratio")
+```
+
+
+## Conclusion
+
+The Readfield ratio for this dataset is `r round(readfield_ratio, digits = 3)`. 
+

@@ -1,0 +1,61 @@
+---
+title: "Intro to Quarto"
+author: "Julia Lober"
+format: html
+bibliography: references.bib
+---
+
+# Big title
+
+#### Basic math
+
+Let's look at $2 \times 2$.
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+Since that is so simple, we don't really need to see the code.
+
+[Google](https://google.com) could also have given us that answer pretty easily.
+
+#### A list
+
+-   we can write multiple things
+-   in a row
+-   like this.
+
+```{r}
+a <- 1:10 
+
+for (num in a) {
+  print(num * num)
+}
+```
+
+## Citations!
+
+Here is a fact [@oke2020] with a citation.
+
+This is from the `Insert` menu in `Visual` edit mode. You can put a DOI into the search box and RStudio/Quarto will search for the materials and generate a citation for the reference pretty much automatically.
+
+You *can* write manuscripts in Quarto. This would be something for YAML set-up.
+
+## Table
+
+| Col1    | Col2 | Another column |
+|---------|------|----------------|
+| Nothing | here | still          |
+
+: Table 1. has a caption now.
+
+------------------------------------------------------------------------
+
+## Code chunks.
+
+Create a new chunk with `Opt-Alt-I`
+
+```{r}
+
+```
