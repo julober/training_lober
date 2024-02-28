@@ -1,0 +1,198 @@
+---
+title: "Cleaning & Wrangling"
+author: "Julia Lober"
+format: html
+---
+
+### Setup
+
+Load packages. 
+
+```{r}
+#| message: false
+
+library(tidyr)
+library(dplyr)
+library(readr)
+```
+
+### Read in the data
+
+```{r}
+catch_orig <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1",
+                       show_col_types = FALSE)
+```
+
+This data is is from the Arctic Data Center, linked [here](https://knb.ecoinformatics.org/view/df35b.304.2). 
+
+## Explore 
+
+```{r}
+colnames(catch_orig)
+```
+
+This data set has 9 columns describing the region, year, and salmon observations for AK management regions. 
+
+```{r}
+head(catch_orig)
+```
+
+## Clean data
+
+Use `select()` to filter out columns that are not needed. 
+
+```{r}
+catch_clean <- catch_orig %>%
+  select(-c("All", "notesRegCode"))
+head(catch_clean)
+```
+
+Take a closer look at each column. Notice that Chinook is a column type of `chr` instead of `dbl` numeric values like the rest of the salmon types. 
+
+```{r}
+glimpse(catch_clean)
+```
+
+Make the `Chinook` column numeric. 
+
+```{r}
+catch_cleaner <- catch_clean %>% 
+  mutate(Chinook = as.numeric(Chinook))
+```
+
+`mutate` reports that NAs were introduced by coercion. Let's investigate. 
+
+```{r}
+i_na <- which(is.na(catch_cleaner$Chinook))
+
+print(catch_clean[(i_na-1):(i_na+1),])
+```
+
+This data set was automatically read from a scan of a physical data sheet. It appears that an 1 was mistakenly read as an "I" - we can fix this! 
+
+```{r}
+catch_cleaner <- catch_clean %>% 
+  mutate(Chinook = if_else(condition = Chinook == "I",
+                           true = "1",
+                           false = Chinook)) %>% 
+  mutate(Chinook = as.numeric(Chinook))
+```
+
+```{r}
+glimpse(catch_cleaner)
+```
+
+## Reshaping data
+
+```{r}
+catch_long <- catch_cleaner %>% 
+  pivot_longer(cols = -c(Region, Year), 
+               names_to = "species", 
+               values_to = "catch")
+head(catch_long)
+```
+
+```{r}
+catch_wide <- catch_long %>% 
+  pivot_wider(names_from = species,
+              values_from = catch)
+head(catch_wide)
+```
+
+## Rename columns
+
+Replace the name with something descriptive. 
+
+```{r}
+catch_long <- catch_long %>% 
+  rename(catch_thousands = catch)
+head(catch_long)
+```
+
+```{r}
+catch_long <- catch_long %>% 
+  mutate(catch = catch_thousands * 1000)
+head(catch_long)
+```
+
+## Some summary statistics
+
+```{r}
+# these are equivalent 
+mean_region <- catch_long %>% 
+  group_by(Region) %>% 
+  summarize(mean_catch = mean(catch))
+
+mean_region_alt <- catch_long %>% 
+  summarize(mean_catch = mean(catch), .by = Region)
+head(mean_region_alt)
+```
+
+```{r}
+n_region <- catch_long %>% 
+  group_by(Region) %>% 
+  summarize(n = n())
+head(n_region)
+```
+
+## Filtering
+
+```{r}
+sse_catch <- catch_long %>% 
+  filter(Region == "SSE") 
+head(sse_catch)
+```
+
+```{r}
+catch_million <- catch_long %>% 
+  filter(catch > 1000000)
+head(catch_million)
+```
+
+## Sorting data
+
+```{r}
+mean_region <- catch_long %>% 
+  group_by(Region) %>% 
+  summarize(mean_catch = mean(catch)) %>% 
+  arrange(mean_catch)
+head(mean_region)
+
+mean_region <- catch_long %>% 
+  group_by(Region) %>% 
+  summarize(mean_catch = mean(catch)) %>% 
+  arrange(desc(mean_catch))
+head(mean_region)
+```
+
+## Splitting and uniting
+
+```{r}
+cities_df <- data.frame(city = c("Juneau AK",
+                                 "Sitka AK",
+                                 "Anchorage AK"))
+
+city_st <- cities_df %>% 
+  separate(col = city,
+           into = c("city", "state"), 
+           sep = " ")
+head(city_st)
+```
+
+```{r}
+dates_df <- data.frame(
+    year = c("1930",
+             "1930",
+             "1930"),
+    month = c("12",
+              "12",
+              "12"),
+    day = c("14",
+            "15",
+            "16")
+)
+
+dates_df %>%
+    unite(date, year, month, day, sep = "-")
+```
+
