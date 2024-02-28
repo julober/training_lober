@@ -1,0 +1,76 @@
+---
+title: "Intro to Data Viz"
+author: "Julia Lober"
+format: html
+---
+
+## Set up
+
+```{r}
+#| message: false
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(janitor)
+library(scales)
+library(leaflet)
+library(DT)
+```
+
+## Read data 
+
+```{r}
+escape <- read_csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e",
+                   show_col_types = FALSE)
+colnames(escape)
+```
+```{r}
+#| eval: false
+
+glimpse(escape)
+```
+
+## Cleaning data
+
+Cleaning column names
+```{r}
+escape_clean <- escape %>% 
+  clean_names() %>% 
+  separate(sample_date, 
+           into = c("year", "month", "day"), 
+           sep = "-") %>% 
+  mutate(year = as.numeric(year)) %>% 
+  summarize(escapement = sum(daily_count), 
+            .by = c(species, sasap_region, year)) %>% 
+  filter(species %in% c("Chum", "Sockeye", "Chinook", "Coho", "Pink"))
+
+head(escape_clean)
+```
+
+## Plot data
+
+```{r}
+ggplot(escape_clean, 
+       aes(x = species, y = escapement, fill = sasap_region)) + 
+  geom_col()
+```
+
+```{r}
+ggplot(escape_clean, 
+       aes(x = species, y = escapement)) + 
+  #geom_col(aes(fill = sasap_region)) + 
+  geom_bar(stat = "summary", fun = "mean") 
+```
+
+## Multiple plots
+```{r}
+escape_clean %>% 
+  filter(year %in% c(2000:2016)) %>% 
+  ggplot(aes(x = year, y = escapement, color = species)) + 
+    geom_line() + 
+    geom_point() + 
+    facet_wrap(~ sasap_region, 
+               scales = "free_y")
+```
+
